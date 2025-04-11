@@ -7,9 +7,12 @@
     "default_popup": "popup.html",
     "default_icon": {
       "16": "bud.png",
-      "48": "sunflower.png",
-      "128": "sunflower.png"
+      "48": "bud.png",
+      "128": "bud.png"
     }
   },
-  "permissions": []
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["alarms", "storage"]
 }
