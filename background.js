@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === "RESET_TIMER") {
     running = false;
-    timeLeft = 20 * 60;
+    timeLeft = (message.minutes || 20) * 60;
     chrome.alarms.clear("pomodoro");
   }
 
