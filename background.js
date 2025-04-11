@@ -1,11 +1,17 @@
 let running = false;
 let timeLeft = 20 * 60; // 20 minutes
 
+console.log("Service Worker 启动了");
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("接收到消息：", message);
+
   if (message.type === "START_TIMER") {
+    console.log("启动计时器");
     if (!running) {
+      timeLeft = (message.minutes || 20) * 60;
       running = true;
-      chrome.alarms.create("pomodoro", { periodInMinutes: 1 / 60 }); // 每秒钟触发一次
+      chrome.alarms.create("pomodoro", { periodInMinutes: 1 / 60 });
     }
   }
 
@@ -23,6 +29,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "GET_TIME") {
     sendResponse({ timeLeft, running });
   }
+
+  return true; // 表示异步 sendResponse
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -34,7 +42,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       running = false;
       chrome.notifications.create({
         type: "basic",
-        iconUrl: "icon.png",
+        iconUrl: "sunflower.png",
         title: "番茄时间到啦！",
         message: "休息一下吧 🍅"
       });
