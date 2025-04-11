@@ -22,3 +22,11 @@ button {
 #startBtn { background-color: #4CAF50; color: white; }
 #pauseBtn { background-color: #f0ad4e; color: white; }
 #resetBtn { background-color: #d9534f; color: white; }
+
+
+input[type="number"] {
+  width: 60px;
+  padding: 5px;
+  margin: 10px 0;
+  text-align: center;
+}

@@ -18,18 +18,27 @@ function updateTimer() {
 }
 
 startBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: "START_TIMER" });
+  const customMinutes = parseInt(document.getElementById("customTime").value, 10) || 20;
+  chrome.runtime.sendMessage({ type: "START_TIMER", minutes: customMinutes });
 });
+
 
 pauseBtn.addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: "PAUSE_TIMER" });
 });
 
 resetBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: "RESET_TIMER" });
-  updateTimer();
+  const customMinutes = parseInt(document.getElementById("customTime").value, 10) || 20;
+  chrome.runtime.sendMessage({ type: "RESET_TIMER", minutes: customMinutes });
 });
+
+
+
+
+
 
 // 定时刷新 UI
 setInterval(updateTimer, 1000);
 updateTimer(); // 初始更新
+
+
