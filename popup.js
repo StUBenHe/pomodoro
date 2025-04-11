@@ -2,6 +2,7 @@ const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const resetBtn = document.getElementById('resetBtn');
+const summaryText = document.getElementById('summary');
 
 function formatTime(timeLeft) {
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
@@ -37,7 +38,21 @@ resetBtn.addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: "RESET_TIMER", minutes: customMinutes });
 });
 
+function updateSummary() {
+  chrome.runtime.sendMessage({ type: "GET_HISTORY" }, (response) => {
+    const today = new Date().toISOString().split('T')[0];
+    const total = response.history?.[today] || 0;
+    summaryText.textContent = `今日累计：${total} 分钟`;
+  });
+}
+
 // 定时刷新 UI
-setInterval(updateTimer, 1000);
-updateTimer(); // 初始更新
+setInterval(() => {
+  updateTimer();
+  updateSummary(); // 加这句
+}, 1000);
+
+updateTimer();
+updateSummary();
+
 
