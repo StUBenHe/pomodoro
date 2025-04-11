@@ -1,47 +1,35 @@
-let timer;
-let timeLeft = 20 * 60; // 20 minutes in seconds
-let running = false;
-
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 
-function updateDisplay() {
+function formatTime(timeLeft) {
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const seconds = String(timeLeft % 60).padStart(2, '0');
-  timerDisplay.textContent = `${minutes}:${seconds}`;
+  return `${minutes}:${seconds}`;
 }
 
-function startTimer() {
-  if (running) return;
-  running = true;
-  timer = setInterval(() => {
-    if (timeLeft > 0) {
-      timeLeft--;
-      updateDisplay();
-    } else {
-      clearInterval(timer);
-      running = false;
-      alert('时间到！休息一下吧 🌟');
+function updateTimer() {
+  chrome.runtime.sendMessage({ type: "GET_TIME" }, (response) => {
+    if (response) {
+      timerDisplay.textContent = formatTime(response.timeLeft);
     }
-  }, 1000);
+  });
 }
 
-function pauseTimer() {
-  clearInterval(timer);
-  running = false;
-}
+startBtn.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: "START_TIMER" });
+});
 
-function resetTimer() {
-  clearInterval(timer);
-  timeLeft = 20 * 60;
-  running = false;
-  updateDisplay();
-}
+pauseBtn.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: "PAUSE_TIMER" });
+});
 
-startBtn.addEventListener('click', startTimer);
-pauseBtn.addEventListener('click', pauseTimer);
-resetBtn.addEventListener('click', resetTimer);
+resetBtn.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: "RESET_TIMER" });
+  updateTimer();
+});
 
-updateDisplay(); // 初始化显示
+// 定时刷新 UI
+setInterval(updateTimer, 1000);
+updateTimer(); // 初始更新
