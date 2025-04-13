@@ -1,6 +1,6 @@
-let timeLeft = 20 * 60; // 默认20分钟
+let timeLeft = 20 * 60;
 let running = false;
-let timerState = "stopped"; // "running", "paused", "stopped"
+let timerState = "stopped";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "START_TIMER") {
@@ -41,7 +41,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.storage.sync.get(["history"], (result) => {
       sendResponse({ history: result.history || {} });
     });
-    return true; // 异步回调
+    return true;
   }
 
   if (message.type === "UPDATE_HISTORY") {
@@ -56,7 +56,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
   }
 
-  return true; // 异步 sendResponse 保留
+  return true;
 });
 
 // 定时器逻辑
@@ -71,12 +71,10 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
       chrome.runtime.sendMessage({ type: "TIMER_COMPLETED" });
 
-      // ✅ 在这里直接更新历史记录（默认加 20 分钟）
+      // 自动更新历史记录
       const today = new Date().toISOString().split('T')[0];
-      const defaultMinutes = 20;
-
       chrome.storage.sync.get(["customTime", "history"], (result) => {
-        const usedMinutes = result.customTime || defaultMinutes;
+        const usedMinutes = result.customTime || 20;
         const history = result.history || {};
         history[today] = (history[today] || 0) + usedMinutes;
 

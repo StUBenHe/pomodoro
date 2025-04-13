@@ -4,16 +4,20 @@ const pauseBtn = document.getElementById('pauseBtn');
 const resetBtn = document.getElementById('resetBtn');
 const summaryText = document.getElementById('summary');
 
-let currentTimerState = 'stopped'; // 当前计时器状态
+const musicSelect = document.getElementById('musicSelect');
+const bgm = document.getElementById('bgm');
+const ding = document.getElementById('ding');
 
-// 时间格式化函数（mm:ss）
+let currentTimerState = 'stopped';
+
+// 时间格式化
 function formatTime(timeLeft) {
   const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const seconds = String(timeLeft % 60).padStart(2, '0');
   return `${minutes}:${seconds}`;
 }
 
-// 从 background 获取剩余时间
+// 获取剩余时间
 function updateTimer() {
   chrome.runtime.sendMessage({ type: "GET_TIME" }, (response) => {
     if (response) {
@@ -22,7 +26,7 @@ function updateTimer() {
   });
 }
 
-// 获取并显示今日累计时间
+// 更新今日累计
 function updateSummary() {
   chrome.runtime.sendMessage({ type: "GET_HISTORY" }, (response) => {
     const today = new Date().toISOString().split('T')[0];
@@ -31,38 +35,7 @@ function updateSummary() {
   });
 }
 
-// 启动/恢复计时器
-startBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
-    const customMinutes = parseInt(document.getElementById("customTime").value, 10) || 20;
-
-    if (response.state === "paused") {
-      chrome.runtime.sendMessage({ type: "RESUME_TIMER" });
-    } else {
-      chrome.runtime.sendMessage({ type: "START_TIMER", minutes: customMinutes });
-      saveCustomTime(customMinutes);
-    }
-
-    currentTimerState = "running";
-  });
-});
-
-// 暂停计时器
-pauseBtn.addEventListener('click', () => {
-  chrome.runtime.sendMessage({ type: "PAUSE_TIMER" });
-  currentTimerState = "paused";
-});
-
-// 重置计时器
-resetBtn.addEventListener('click', () => {
-  const customMinutes = parseInt(document.getElementById("customTime").value, 10) || 20;
-  chrome.runtime.sendMessage({ type: "RESET_TIMER", minutes: customMinutes });
-  saveCustomTime(customMinutes);
-  currentTimerState = "stopped";
-  updateSummary(); // 更新历史显示
-});
-
-// 读取上次设置时间
+// 加载设置时间
 function loadCustomTime() {
   chrome.storage.sync.get(['customTime'], (result) => {
     const lastTime = result.customTime || 20;
@@ -71,19 +44,69 @@ function loadCustomTime() {
   });
 }
 
-// 保存当前设置时间
+// 保存设置时间
 function saveCustomTime(customMinutes) {
   chrome.storage.sync.set({ customTime: customMinutes }, () => {
     console.log('Time saved:', customMinutes);
   });
 }
 
-// 定时刷新UI（包括倒计时和累计）
+// 启动或恢复
+startBtn.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
+    const customMinutes = parseInt(document.getElementById("customTime").value, 10) || 20;
+    if (response.state === "paused") {
+      chrome.runtime.sendMessage({ type: "RESUME_TIMER" });
+    } else {
+      chrome.runtime.sendMessage({ type: "START_TIMER", minutes: customMinutes });
+      saveCustomTime(customMinutes);
+    }
+
+    bgm.src = musicSelect.value;
+    bgm.play();
+    currentTimerState = "running";
+  });
+});
+
+// 暂停
+pauseBtn.addEventListener('click', () => {
+  chrome.runtime.sendMessage({ type: "PAUSE_TIMER" });
+  bgm.pause();
+  currentTimerState = "paused";
+});
+
+// 重置
+resetBtn.addEventListener('click', () => {
+  const customMinutes = parseInt(document.getElementById("customTime").value, 10) || 20;
+  chrome.runtime.sendMessage({ type: "RESET_TIMER", minutes: customMinutes });
+  saveCustomTime(customMinutes);
+  bgm.pause();
+  currentTimerState = "stopped";
+  updateSummary();
+});
+
+// 音乐切换
+musicSelect.addEventListener('change', () => {
+  bgm.src = musicSelect.value;
+  if (currentTimerState === 'running') {
+    bgm.play();
+  }
+});
+
+// 计时结束：播放提示音 + 停止背景音乐
+chrome.runtime.onMessage.addListener((message) => {
+  if (message.type === "TIMER_COMPLETED") {
+    ding.play();
+    bgm.pause();
+  }
+});
+
+// 定时刷新 UI
 setInterval(() => {
   updateTimer();
   updateSummary();
 }, 1000);
 
-// 页面加载时初始化
+// 初始化
 loadCustomTime();
 updateTimer();
