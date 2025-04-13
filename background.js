@@ -1,10 +1,16 @@
-let timeLeft = 20 * 60; // 默认20分钟 
+let timeLeft = 20 * 60; // 默认20分钟
 let running = false;
 let timerState = "stopped"; // "running", "paused", "stopped"
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === "START_TIMER") {
     timeLeft = (message.minutes || 20) * 60;
+    running = true;
+    timerState = "running";
+    chrome.alarms.create("pomodoro", { periodInMinutes: 1 / 60 });
+  }
+
+  if (message.type === "RESUME_TIMER") {
     running = true;
     timerState = "running";
     chrome.alarms.create("pomodoro", { periodInMinutes: 1 / 60 });
@@ -31,7 +37,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ state: timerState });
   }
 
-  // ✅ 正确处理 GET_HISTORY
   if (message.type === "GET_HISTORY") {
     chrome.storage.sync.get(["history"], (result) => {
       sendResponse({ history: result.history || {} });
@@ -39,7 +44,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true; // 异步回调
   }
 
-  // ✅ 正确处理 UPDATE_HISTORY
   if (message.type === "UPDATE_HISTORY") {
     const timeSpent = message.timeSpent || 0;
     const today = new Date().toISOString().split('T')[0];
@@ -52,7 +56,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
   }
 
-  return true; // 为异步 sendResponse 保留
+  return true; // 异步 sendResponse 保留
 });
 
 // 定时器逻辑
@@ -66,6 +70,20 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       timerState = "stopped";
 
       chrome.runtime.sendMessage({ type: "TIMER_COMPLETED" });
+
+      // ✅ 在这里直接更新历史记录（默认加 20 分钟）
+      const today = new Date().toISOString().split('T')[0];
+      const defaultMinutes = 20;
+
+      chrome.storage.sync.get(["customTime", "history"], (result) => {
+        const usedMinutes = result.customTime || defaultMinutes;
+        const history = result.history || {};
+        history[today] = (history[today] || 0) + usedMinutes;
+
+        chrome.storage.sync.set({ history }, () => {
+          console.log("计时结束，自动更新历史：", history[today]);
+        });
+      });
 
       chrome.notifications.create({
         type: "basic",
