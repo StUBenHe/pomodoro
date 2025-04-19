@@ -28,7 +28,7 @@
     "justification": "Play background music for Pomodoro timer"
   }],
 "web_accessible_resources": [{
-  "resources": ["audio/*.mp3"], // 假设音频文件在 audio 目录
+  "resources": ["audio/*.mp3", "audio/user/*.mp3"], 
   "matches": [],
   "extension_ids": ["*"]
   }]

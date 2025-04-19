@@ -71,3 +71,16 @@ input[type="number"] {
 .theme-none #timer {
   color: #444444;
 }
+
+/* 森林主题 */
+.theme-forest {
+  background-color: #e8f5e9;
+  color: #1b5e20;
+}
+.theme-forest button {
+  background-color: #4caf50;
+  color: white;
+}
+.theme-forest #timer {
+  color: #2e7d32;
+}

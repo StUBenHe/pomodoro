@@ -127,16 +127,25 @@ resetBtn.addEventListener('click', () => {
 
 function updateTheme() {
   const themeValue = musicSelect.value;
-  chrome.storage.local.set({ selectedTheme: themeValue }); // 保存主题选择
+  chrome.storage.local.set({ selectedTheme: themeValue });
   
-  document.body.classList.remove('theme-lofi', 'theme-rainy', 'theme-none');
-  const theme = musicSelect.value.split('/').pop().split('.')[0]; // 例如 "music_rainy"
-  if (theme === 'none') {
-    body.classList.add('theme-none');
-  } else if (theme.includes('rainy')) {
+  // 动态移除所有主题类
+  const classList = [...body.classList];
+  classList.forEach(className => {
+    if (className.startsWith('theme-')) {
+      body.classList.remove(className);
+    }
+  });
+
+  // 精确匹配逻辑
+  if (themeValue.includes('forest')) {
+    body.classList.add('theme-forest');
+  } else if (themeValue.includes('rainy')) {
     body.classList.add('theme-rainy');
-  } else if (theme.includes('lofi')) {
+  } else if (themeValue.includes('lofi')) {
     body.classList.add('theme-lofi');
+  } else {
+    body.classList.add('theme-none');
   }
 }
 
