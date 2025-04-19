@@ -52,7 +52,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         action: "play",
         music: currentMusic
       });
-      chrome.runtime.sendMessage({ type: "STATE_CHANGED" });
       break;
 
     case "RESUME_TIMER":
@@ -99,7 +98,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       
       chrome.runtime.sendMessage({ type: "STATE_CHANGED" });
-      chrome.runtime.sendMessage({ type: "MUSIC_CONTROL", action: "stop" });
       break;
 
     case "GET_STATE":

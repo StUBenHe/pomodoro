@@ -1,6 +1,7 @@
 // offscreen.js
 let bgm = new Audio();
 bgm.loop = true;
+let currentMusic = null; 
 
 chrome.runtime.onMessage.addListener((message) => {
   // 添加调试日志
@@ -10,6 +11,11 @@ chrome.runtime.onMessage.addListener((message) => {
 
   switch (message.action) { // 注意改为 action 字段
     case 'play':
+      const musicURL = chrome.runtime.getURL(message.music);
+      if (currentMusic !== musicURL) { // 仅当音乐变化时更新
+        bgm.src = musicURL;
+        currentMusic = musicURL;
+      }
       bgm.src = chrome.runtime.getURL(message.music);
       bgm.play()
         .then(() => console.log('Playback started'))
@@ -18,17 +24,15 @@ chrome.runtime.onMessage.addListener((message) => {
       
     case 'pause':
       bgm.pause();
+      console.log('Playback paused');
       break;
       
     case 'stop':
       bgm.pause();
       bgm.currentTime = 0;
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
-        audioElement.src = ""; // 释放音频资源
-        audioElement = null;  // 清除引用
-      }
+      bgm.src = ""; // 清除音频源
+      currentMusic = null; // 清除记录
+      console.log('Playback stopped');
       break;
   }
 });

@@ -89,34 +89,27 @@ startBtn.addEventListener('click', async () => {
   const customMinutes = parseInt(customTimeInput.value, 10) || 20;
   saveCustomTime(customMinutes);
   timerDisplay.textContent = formatTime(customMinutes * 60);
-  await new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
-      if (response?.state === "paused") {
-        chrome.runtime.sendMessage({ type: "RESUME_TIMER" }, resolve);
-      } else {
-        chrome.runtime.sendMessage({
-          type: "START_TIMER",
-          minutes: customMinutes,
-          music: musicSelect.value
-        }, resolve);
-      }
-    });
+
+  // 直接根据当前状态发送单一指令
+  const state = await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "GET_STATE" }, resolve);
   });
 
-  await updateUIState(); // 确保状态更新后刷新 UI
-  chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
-    if (response?.state === "paused") {
-      chrome.runtime.sendMessage({ type: "RESUME_TIMER" });
-    } else {
+  if (state?.state === "paused") {
+    await new Promise((resolve) => {
+      chrome.runtime.sendMessage({ type: "RESUME_TIMER" }, resolve);
+    });
+  } else {
+    await new Promise((resolve) => {
       chrome.runtime.sendMessage({
         type: "START_TIMER",
         minutes: customMinutes,
         music: musicSelect.value
-      });
-    }
-  });
+      }, resolve);
+    });
+  }
 
-  updateUIState();
+  await updateUIState();
 });
 
 pauseBtn.addEventListener('click', () => {
