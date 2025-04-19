@@ -93,8 +93,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       chrome.alarms.clear("tick");
       saveState();
       chrome.runtime.sendMessage({
-        type: "TIMER_UPDATE",
-        timeLeft: currentTimeLeft
+        type: "MUSIC_CONTROL",
+        target: "offscreen",
+        action: "stop"
       });
       
       chrome.runtime.sendMessage({ type: "STATE_CHANGED" });
@@ -146,7 +147,11 @@ chrome.alarms.onAlarm.addListener((alarm) => {
       timerState = "stopped";
       currentTimeLeft = 0;
       chrome.alarms.clear("tick");
-
+      chrome.runtime.sendMessage({
+        type: "MUSIC_CONTROL",
+        target: "offscreen",
+        action: "stop"       // 明确停止动作
+      });
       const today = new Date().toISOString().split("T")[0];
       chrome.storage.local.get(["history", "currentSessionMinutes"], (result) => {
         const usedMinutes = result.currentSessionMinutes || 20;

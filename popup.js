@@ -6,8 +6,27 @@ const summaryText = document.getElementById('summary');
 const musicSelect = document.getElementById('musicSelect');
 const customTimeInput = document.getElementById('customTime');
 const body = document.body;
+let isUpdating = false;
 
 let currentTimerState = 'stopped';
+
+
+async function preciseUpdate() {
+  if (isUpdating) return;
+  isUpdating = true;
+  
+  // 直接请求最新状态而非依赖轮询
+  const state = await new Promise(resolve => {
+    chrome.runtime.sendMessage({ type: "GET_STATE" }, resolve);
+  });
+  
+  timerDisplay.textContent = formatTime(state.timeLeft);
+  startBtn.disabled = state.state === 'running';
+  pauseBtn.disabled = state.state !== 'running';
+  resetBtn.disabled = state.state === 'stopped';
+  
+  isUpdating = false;
+}
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60).toString().padStart(2, '0');
@@ -60,12 +79,8 @@ function updateSummary() {
 }
 
 async function updateUIState() {
-  const result = await chrome.runtime.sendMessage({ type: "GET_STATE" });
-  currentTimerState = result?.state || 'stopped';
-
-  startBtn.disabled = currentTimerState === 'running';
-  pauseBtn.disabled = currentTimerState !== 'running';
-  resetBtn.disabled = currentTimerState === 'stopped';
+  await preciseUpdate();
+  chrome.runtime.sendMessage({ type: "SYNC_STATE" });
 }
 
 startBtn.addEventListener('click', async () => {
@@ -139,6 +154,18 @@ chrome.runtime.onMessage.addListener((message) => {
   }
   if (message.type === "STATE_CHANGED") {
     updateUIState(); // 收到通知立即更新 UI
+  }
+  if (message.type === "TIMER_FINISHED") {
+    // 强制更新所有状态
+    updateTimer();
+    updateUIState();
+    
+    // 双重保障发送停止指令
+    chrome.runtime.sendMessage({
+      type: "MUSIC_CONTROL",
+      target: "offscreen",
+      action: "stop"
+    });
   }
 });
 

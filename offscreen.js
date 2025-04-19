@@ -23,6 +23,12 @@ chrome.runtime.onMessage.addListener((message) => {
     case 'stop':
       bgm.pause();
       bgm.currentTime = 0;
+      if (audioElement) {
+        audioElement.pause();
+        audioElement.currentTime = 0;
+        audioElement.src = ""; // 释放音频资源
+        audioElement = null;  // 清除引用
+      }
       break;
   }
 });
