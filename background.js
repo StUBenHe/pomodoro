@@ -92,6 +92,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       targetEndTime = null;
       chrome.alarms.clear("tick");
       saveState();
+      chrome.runtime.sendMessage({
+        type: "TIMER_UPDATE",
+        timeLeft: currentTimeLeft
+      });
+      
+      chrome.runtime.sendMessage({ type: "STATE_CHANGED" });
       chrome.runtime.sendMessage({ type: "MUSIC_CONTROL", action: "stop" });
       break;
 

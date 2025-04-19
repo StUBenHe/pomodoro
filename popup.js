@@ -73,6 +73,7 @@ startBtn.addEventListener('click', async () => {
 
   const customMinutes = parseInt(customTimeInput.value, 10) || 20;
   saveCustomTime(customMinutes);
+  timerDisplay.textContent = formatTime(customMinutes * 60);
   await new Promise((resolve) => {
     chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
       if (response?.state === "paused") {
@@ -117,6 +118,9 @@ resetBtn.addEventListener('click', () => {
 });
 
 function updateTheme() {
+  const themeValue = musicSelect.value;
+  chrome.storage.local.set({ selectedTheme: themeValue }); // 保存主题选择
+  
   document.body.classList.remove('theme-lofi', 'theme-rainy', 'theme-none');
   const theme = musicSelect.value.split('/').pop().split('.')[0]; // 例如 "music_rainy"
   if (theme === 'none') {
@@ -144,4 +148,10 @@ loadCustomTime();
 updateTimer();
 updateSummary();
 updateUIState();
-updateTheme(); // 初始设置主题
+
+// 读取上次的主题选择
+chrome.storage.local.get(['selectedTheme'], (result) => {
+  const theme = result.selectedTheme || "audio/none"; // 默认为无主题
+  musicSelect.value = theme;
+  updateTheme();
+});
