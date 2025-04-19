@@ -52,6 +52,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         action: "play",
         music: currentMusic
       });
+      chrome.runtime.sendMessage({ type: "STATE_CHANGED" });
       break;
 
     case "RESUME_TIMER":
@@ -67,6 +68,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           music: currentMusic
         });
       }
+      chrome.runtime.sendMessage({ type: "STATE_CHANGED" });
       break;
 
     case "PAUSE_TIMER":
@@ -77,9 +79,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       targetEndTime = null;
       chrome.alarms.clear("tick");
       saveState();
-      chrome.runtime.sendMessage({ type: "MUSIC_CONTROL",
+      chrome.runtime.sendMessage({ 
+        type: "MUSIC_CONTROL",
         target: "offscreen", // 添加 target 字段
         action: "pause" });
+      chrome.runtime.sendMessage({ type: "STATE_CHANGED" });  
       break;
 
     case "RESET_TIMER":
@@ -93,6 +97,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case "GET_STATE":
       sendResponse({ state: timerState, timeLeft: currentTimeLeft });
+      chrome.runtime.sendMessage({ type: "STATE_CHANGED" });
       break;
 
     case "SET_MUSIC":

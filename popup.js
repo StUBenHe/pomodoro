@@ -1,4 +1,3 @@
-// popup.js
 const timerDisplay = document.getElementById('timer');
 const startBtn = document.getElementById('startBtn');
 const pauseBtn = document.getElementById('pauseBtn');
@@ -6,6 +5,7 @@ const resetBtn = document.getElementById('resetBtn');
 const summaryText = document.getElementById('summary');
 const musicSelect = document.getElementById('musicSelect');
 const customTimeInput = document.getElementById('customTime');
+const body = document.body;
 
 let currentTimerState = 'stopped';
 
@@ -18,20 +18,18 @@ function formatTime(seconds) {
 async function setupOffscreen() {
   try {
     const existing = await chrome.offscreen.hasDocument();
-    console.log('Offscreen document exists:', existing);
-    
     if (!existing) {
       await chrome.offscreen.createDocument({
         url: 'offscreen.html',
         reasons: ['AUDIO_PLAYBACK'],
         justification: 'Background music playback'
       });
-      console.log('Offscreen document created');
     }
   } catch (err) {
     console.error('Offscreen setup failed:', err);
   }
 }
+
 function saveCustomTime(minutes) {
   const validMinutes = Math.max(1, Math.min(120, minutes));
   chrome.storage.local.set({ customTime: validMinutes });
@@ -72,10 +70,24 @@ async function updateUIState() {
 
 startBtn.addEventListener('click', async () => {
   await setupOffscreen();
-  
+
   const customMinutes = parseInt(customTimeInput.value, 10) || 20;
   saveCustomTime(customMinutes);
+  await new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
+      if (response?.state === "paused") {
+        chrome.runtime.sendMessage({ type: "RESUME_TIMER" }, resolve);
+      } else {
+        chrome.runtime.sendMessage({
+          type: "START_TIMER",
+          minutes: customMinutes,
+          music: musicSelect.value
+        }, resolve);
+      }
+    });
+  });
 
+  await updateUIState(); // 确保状态更新后刷新 UI
   chrome.runtime.sendMessage({ type: "GET_STATE" }, (response) => {
     if (response?.state === "paused") {
       chrome.runtime.sendMessage({ type: "RESUME_TIMER" });
@@ -87,6 +99,7 @@ startBtn.addEventListener('click', async () => {
       });
     }
   });
+
   updateUIState();
 });
 
@@ -103,31 +116,27 @@ resetBtn.addEventListener('click', () => {
   updateUIState();
 });
 
-musicSelect.addEventListener('change', () => {
-  chrome.runtime.sendMessage({
-    type: "SET_MUSIC",
-    music: musicSelect.value
-  });
-});
+function updateTheme() {
+  document.body.classList.remove('theme-lofi', 'theme-rainy', 'theme-none');
+  const theme = musicSelect.value.split('/').pop().split('.')[0]; // 例如 "music_rainy"
+  if (theme === 'none') {
+    body.classList.add('theme-none');
+  } else if (theme.includes('rainy')) {
+    body.classList.add('theme-rainy');
+  } else if (theme.includes('lofi')) {
+    body.classList.add('theme-lofi');
+  }
+}
 
+musicSelect.addEventListener('change', updateTheme);
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === "TIMER_UPDATE") {
     timerDisplay.textContent = formatTime(message.timeLeft);
   }
+  if (message.type === "STATE_CHANGED") {
+    updateUIState(); // 收到通知立即更新 UI
+  }
 });
-
-setInterval(() => {
-  updateTimer();
-  updateSummary();
-}, 1000);
-
-const select = document.getElementById('musicSelect');
-select.addEventListener('change', () => {
-  document.body.classList.remove('theme-rainy', 'theme-lofi', 'theme-none');
-  const theme = select.value;
-  document.body.classList.add(`theme-${theme}`);
-});
-
 
 // 初始化
 setupOffscreen();
@@ -135,3 +144,4 @@ loadCustomTime();
 updateTimer();
 updateSummary();
 updateUIState();
+updateTheme(); // 初始设置主题
