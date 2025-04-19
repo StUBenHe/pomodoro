@@ -1,3 +1,4 @@
+<!-- popup.html -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -22,16 +23,13 @@
       <button id="resetBtn">重置</button>
     </div>
     <div>
-      <label for="musicSelect">背景音乐：</label>
+      <label for="musicSelect">主题：</label>
       <select id="musicSelect">
-        <option value="music_rainy.mp3">雨和钢琴</option>
-        <option value="music_lofi.mp3">lofi</option>
-        <!-- 更多选项 -->
+        <option value="audio/music_rainy.mp3">雨天</option>
+        <option value="audio/music_lofi.mp3">咖啡馆</option>
+        <option value="audio/none">无主题</option>
       </select>
     </div>
-    <audio id="bgm" loop></audio>
-    <audio id="ding"></audio>
-    
   </div>
   <script src="popup.js"></script>
 </body>
