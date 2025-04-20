@@ -107,5 +107,5 @@ cd pomodoro
 - 如果你计划发布到 GitHub 上，记得更新并检查 `LICENSE` 文件以及其他相关文档（如贡献指南等）。
 
 希望这个 README 文件能帮助你启动项目并提供给其他用户一个清晰的使用指南。如果你有其他问题，欢迎继续提问！
-音乐版权来自morning-birds.mp3 by klankschap -- https://freesound.org/s/54370/ -- License: Attribution NonCommercial 4.0
+#### 音乐版权来自morning-birds.mp3 by klankschap -- https://freesound.org/s/54370/ -- License: Attribution NonCommercial 4.0
 

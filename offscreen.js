@@ -1,38 +1,82 @@
 // offscreen.js
-let bgm = new Audio();
-bgm.loop = true;
-let currentMusic = null; 
 
-chrome.runtime.onMessage.addListener((message) => {
-  // 添加调试日志
-  console.log('[Offscreen] Received message:', message);
+// ==================== 音频播放器核心 ====================
+let bgm = new Audio();
+bgm.loop = true; // 启用循环播放
+let currentMusic = null; // 当前播放的音乐路径
+
+// ==================== 调试日志系统 ====================
+const logger = {
+  log: (message) => console.log(`[Offscreen][${new Date().toISOString()}] ${message}`),
+  error: (message) => console.error(`[Offscreen][${new Date().toISOString()}] ${message}`)
+};
+
+// ==================== 音频控制函数 ====================
+function handlePlay(musicPath) {
+  const musicURL = chrome.runtime.getURL(musicPath);
   
+  // 仅在需要时更新音源（优化性能）
+  if (currentMusic !== musicURL) {
+    bgm.src = musicURL;
+    currentMusic = musicURL;
+    logger.log(`Loading new audio source: ${musicURL}`);
+  }
+
+  bgm.play()
+    .then(() => logger.log("Playback started successfully"))
+    .catch(err => {
+      logger.error(`Playback failed: ${err.message}`);
+      // 重置播放状态避免卡死
+      bgm.pause();
+      bgm.currentTime = 0;
+    });
+}
+
+function handlePause() {
+  bgm.pause();
+  logger.log("Playback paused");
+}
+
+function handleStop() {
+  bgm.pause();
+  bgm.currentTime = 0;
+  bgm.src = "";
+  currentMusic = null;
+  logger.log("Playback fully stopped");
+}
+
+// ==================== 消息路由处理 ====================
+chrome.runtime.onMessage.addListener((message) => {
+  logger.log(`Received message: ${JSON.stringify(message)}`);
+  
+  // 过滤非目标消息
   if (message.target !== 'offscreen') return;
 
-  switch (message.action) { // 注意改为 action 字段
+  switch (message.action) {
     case 'play':
-      const musicURL = chrome.runtime.getURL(message.music);
-      if (currentMusic !== musicURL) { // 仅当音乐变化时更新
-        bgm.src = musicURL;
-        currentMusic = musicURL;
+      if (!message.music) {
+        logger.error("Missing music parameter in play action");
+        return;
       }
-      bgm.src = chrome.runtime.getURL(message.music);
-      bgm.play()
-        .then(() => console.log('Playback started'))
-        .catch(err => console.error('Playback failed:', err));
+      handlePlay(message.music);
       break;
       
     case 'pause':
-      bgm.pause();
-      console.log('Playback paused');
+      handlePause();
       break;
       
     case 'stop':
-      bgm.pause();
-      bgm.currentTime = 0;
-      bgm.src = ""; // 清除音频源
-      currentMusic = null; // 清除记录
-      console.log('Playback stopped');
+      handleStop();
       break;
+
+    default:
+      logger.error(`Unknown action type: ${message.action}`);
   }
+});
+
+// ==================== 内存管理 ====================
+// 页面卸载时清理资源
+window.addEventListener('beforeunload', () => {
+  handleStop();
+  logger.log("Offscreen document unloading...");
 });
